@@ -128,7 +128,7 @@ Corresponding JSON would look like:
 Nodes in your `codingTree` are made of `Key`s initialized one of the following ways:
 
 - `Key("name") { /* More Keys */ }`: node that don't capture values directly, but contain other nodes
-	- This maps to a serialized representation like `{ "name": { ... }}
+	- This maps to a serialized representation like `{ "name": { ... }}`
 
 - `Key("name", containing: \._value)`: node that should be decoded into the `value` property
 

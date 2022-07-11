@@ -36,7 +36,21 @@ public extension DeepCodingTree where Root: DeepDecodable {
 	*/
 	func decode(from decoder: Decoder, into target: inout Root) throws {
 		let container = try decoder.container(keyedBy: DynamicStringCodingKey.self)
+		try self.decode(from: container, into: &target)
+	}
 
+	/**
+	Decode values from the input container, setting the corresponding properties on the input instance to be decoded.
+
+	Does not actually do any decoding itself, just starts the recursive tree walking and lets the nodes handle actual decoding.
+
+	- Parameters:
+		- container: `Codable` container instance representing the serialized representation
+		- target: instance of the type being decoded, into which decoded values should be written
+
+	- Throws: Only rethrows errors produced in normal `Codable` decoding
+	*/
+	func decode(from container: DecodingContainer, into target: inout Root) throws {
 		for node in self.nodes {
 			try node.decode(from: container, into: &target)
 		}

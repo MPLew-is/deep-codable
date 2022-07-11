@@ -1,7 +1,9 @@
 /// Object representing a node on the coding tree
 public struct DeepCodingNode<Root> {
+	/// Shortcut alias for the type of the coding tree
+	public typealias Tree        = DeepCodingTree<Root>
 	/// Shortcut alias for the type of the result builder
-	public typealias TreeBuilder = DeepCodingTree<Root>.Builder
+	public typealias TreeBuilder = Tree.Builder
 
 	/// Immediate children of this node
 	internal let children: [Self]?
@@ -33,9 +35,9 @@ public struct DeepCodingNode<Root> {
 
 	This has to be `internal` since it's used in a method used by other types in this module.
 	*/
-	internal typealias DecodingContainer = KeyedDecodingContainer<DynamicStringCodingKey>
+	internal typealias DecodingContainer = Tree.DecodingContainer
 	/// Shortcut alias for the decode closure's signature
-	internal  typealias DecodeSignature   = (DecodingContainer, inout Root) throws -> ()
+	internal typealias DecodeSignature   = (DecodingContainer, inout Root) throws -> ()
 
 	/**
 	Stored implementation for the `decode` function defined in an extension, to allow for proper type erasure

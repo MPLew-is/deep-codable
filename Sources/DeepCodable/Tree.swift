@@ -33,9 +33,11 @@ public struct DeepCodingTree<Root> {
 	}
 
 	/// Shortcut alias for the type of the result builder helper struct
-	public typealias Builder = TreeBuilder<Root>
+	public typealias Builder           = TreeBuilder<Root>
 	/// Shortcut alias for the type of the node in the coding tree
-	public typealias Node    = Builder.Node
+	public typealias Node              = Builder.Node
+	/// Shortcut alias for the type of the cointainer used in decoding
+	public typealias DecodingContainer = KeyedDecodingContainer<DynamicStringCodingKey>
 
 
 	/// Top-level nodes in the tree
@@ -103,15 +105,15 @@ This has to be `internal` since it's used in methods used throughout this module
 
 Derived from: https://swiftsenpai.com/swift/decode-dynamic-keys-json
 */
-internal struct DynamicStringCodingKey: CodingKey {
-	let stringValue: String
-	init(stringValue: String) {
+public struct DynamicStringCodingKey: CodingKey {
+	public let stringValue: String
+	public init(stringValue: String) {
 		self.stringValue = stringValue
 	}
 
 	// This is a protocol requirement, but this is only intended to hold strings so just return `nil` for everything `Int`-related.
-	let intValue: Int? = nil
-	init?(intValue: Int) {
+	public let intValue: Int? = nil
+	public init?(intValue: Int) {
 		return nil
 	}
 }

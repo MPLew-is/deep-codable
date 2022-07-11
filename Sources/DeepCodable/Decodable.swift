@@ -101,14 +101,24 @@ public extension DeepCodingNode where Root: DeepDecodable {
 	}
 
 	/**
-	Initialize an instance containing child nodes.
+	Initialize an instance containing child nodes from a result builder.
 
 	- Parameters:
 		- key: coding key used to index this node
 		- builder: closure representing the output of a result builder block
 	*/
 	init(_ key: String, @TreeBuilder _ builder: () -> [Self]) {
-		let children = builder()
+		self.init(key, children: builder())
+	}
+
+	/**
+	Initialize an instance containing child nodes.
+
+	- Parameters:
+		- key: coding key used to index this node
+		- children: array of direct child nodes
+	*/
+	init(_ key: String, children: [Self]) {
 		// Nodes are considered optional if all of their children are also optional, or they directly decode an optional value.
 		let optionalToDecode = children.allSatisfy(\.optionalToDecode)
 

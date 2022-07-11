@@ -47,7 +47,16 @@ public struct DeepCodingTree<Root> {
 	- Parameter builder: closure representing the output of a result builder block
 	*/
 	public init(@Builder _ builder: () -> [Node]) {
-		self.nodes = builder()
+		self.init(nodes: builder())
+	}
+
+	/**
+	Initialize an instance from an array of child nodes.
+
+	- Parameter nodes: array of direct child nodes
+	*/
+	public init(nodes: [Node]) {
+		self.nodes = nodes
 	}
 }
 

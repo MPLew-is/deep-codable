@@ -36,7 +36,7 @@ public struct DeepCodingTree<Root> {
 	public typealias Builder           = TreeBuilder<Root>
 	/// Shortcut alias for the type of the node in the coding tree
 	public typealias Node              = Builder.Node
-	/// Shortcut alias for the type of the cointainer used in decoding
+	/// Shortcut alias for the type of the container used in decoding
 	public typealias DecodingContainer = KeyedDecodingContainer<DynamicStringCodingKey>
 
 

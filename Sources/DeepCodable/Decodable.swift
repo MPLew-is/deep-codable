@@ -119,7 +119,7 @@ public extension DeepCodingNode where Root: DeepDecodable {
 
 	- Parameters:
 		- key: coding key used to index this node
-		- builder: closure representing the output of a result builder block
+		- builder: closure representing the output of a result builder block containing this node's children
 	*/
 	init(_ key: String, @TreeBuilder _ builder: () -> [Self]) {
 		self.init(key, children: builder())

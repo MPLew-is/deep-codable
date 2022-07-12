@@ -13,7 +13,7 @@ public extension DeepCodingNode where Root: DeepCodable {
 
 	- Parameters:
 		- key: coding key used to index this node
-		- builder: closure representing the output of a result builder block
+		- builder: closure representing the output of a result builder block containing this node's children
 	*/
 	init(_ key: String, @TreeBuilder _ builder: () -> [Self]) {
 		let children = builder()

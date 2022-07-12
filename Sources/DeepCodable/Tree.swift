@@ -46,7 +46,7 @@ public struct DeepCodingTree<Root> {
 	/**
 	Initialize an instance from the output of a result builder defining the top-level nodes of the tree.
 
-	- Parameter builder: closure representing the output of a result builder block
+	- Parameter builder: closure representing the output of a result builder block containing the top-level nodes
 	*/
 	public init(@Builder _ builder: () -> [Node]) {
 		self.init(nodes: builder())

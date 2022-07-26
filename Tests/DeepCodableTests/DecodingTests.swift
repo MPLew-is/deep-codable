@@ -176,6 +176,45 @@ final class DecodingTests: XCTestCase {
 		XCTAssertEqual("tenthValue", decoded.key)
 	}
 
+	/// Test that decoding a deep ten-level JSON body using a flattened coding tree decodes the correct value.
+	func testFlattenedExcessivelyDeepDecoding() throws {
+		struct FlattenedExcessivelyDeepDecoding: DeepDecodable {
+			static let codingTree = CodingTree {
+				Key("top", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", containing: \._key)
+			}
+
+			@Value var key: String
+		}
+
+		let json = """
+			{
+				"top": {
+					"second": {
+						"third": {
+							"fourth": {
+								"fifth": {
+									"sixth": {
+										"seventh": {
+											"eighth": {
+												"ninth": {
+													"tenth": "tenthValue"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			"""
+
+		let decoded = try decode(FlattenedExcessivelyDeepDecoding.self, from: json)
+
+		XCTAssertEqual("tenthValue", decoded.key)
+	}
+
 	/// Test that decoding a deep ten-level JSON body with two keys in different branches decodes the correct values.
 	func testBranchedExcessivelyDeepDecoding() throws {
 		struct BranchedExcessivelyDeepDecoding: DeepDecodable {
@@ -250,6 +289,57 @@ final class DecodingTests: XCTestCase {
 		XCTAssertEqual("ninth2Value", decoded.key2)
 	}
 
+	/// Test that decoding a deep ten-level JSON body with two keys in different branches using a flattened coding tree decodes the correct values.
+	func testFlattenedBranchedExcessivelyDeepDecoding() throws {
+		struct FlattenedBranchedExcessivelyDeepDecoding: DeepDecodable {
+			static let codingTree = CodingTree {
+				Key("top", "second", "third", "fourth", "fifth") {
+					Key("sixth1", "seventh1", "eighth1", "ninth1", "tenth1", containing: \._key1)
+					Key("sixth2", "seventh2", "eighth2", "ninth2", containing: \._key2)
+				}
+			}
+
+			@Value var key1: String
+			@Value var key2: String
+		}
+
+		let json = """
+			{
+				"top": {
+					"second": {
+						"third": {
+							"fourth": {
+								"fifth": {
+									"sixth1": {
+										"seventh1": {
+											"eighth1": {
+												"ninth1": {
+													"tenth1": "tenth1Value"
+												}
+											}
+										}
+									},
+									"sixth2": {
+										"seventh2": {
+											"eighth2": {
+												"ninth2": "ninth2Value"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			"""
+
+		let decoded = try decode(FlattenedBranchedExcessivelyDeepDecoding.self, from: json)
+
+		XCTAssertEqual("tenth1Value", decoded.key1)
+		XCTAssertEqual("ninth2Value", decoded.key2)
+	}
+
 
 	/// Test that optionals decode correctly when provided an actual value.
 	func testOptionalDecodingToValue() throws {
@@ -291,6 +381,47 @@ final class DecodingTests: XCTestCase {
 			{}
 			"""
 		let decoded = try decode(OptionalDecodingToNil.self, from: json)
+
+		XCTAssertEqual(nil, decoded.key)
+	}
+
+
+	/// Test that optionals decode correctly using a flattened coding tree when provided an actual value.
+	func testFlattenedOptionalDecodingToValue() throws {
+		struct FlattenedOptionalDecodingToValue: DeepDecodable {
+			static let codingTree = CodingTree {
+				Key("top", "second", containing: \._key)
+			}
+
+			@Value var key: String?
+		}
+
+		let json = """
+			{
+				"top": {
+					"second": "secondValue"
+				}
+			}
+			"""
+		let decoded = try decode(FlattenedOptionalDecodingToValue.self, from: json)
+
+		XCTAssertEqual("secondValue", decoded.key)
+	}
+
+	/// Test that optionals decode correctly using a flattened coding tree when not provided an actual value.
+	func testFlattenedOptionalDecodingToNil() throws {
+		struct FlattenedOptionalDecodingToNil: DeepDecodable {
+			static let codingTree = CodingTree {
+				Key("top", "second", containing: \._key)
+			}
+
+			@Value var key: String?
+		}
+
+		let json = """
+			{}
+			"""
+		let decoded = try decode(FlattenedOptionalDecodingToNil.self, from: json)
 
 		XCTAssertEqual(nil, decoded.key)
 	}

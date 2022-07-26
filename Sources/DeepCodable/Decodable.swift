@@ -114,25 +114,55 @@ public extension DeepCodingNode where Root: DeepDecodable {
 		}
 	}
 
+
 	/**
-	Initialize an instance containing child nodes from a result builder.
+	Initialize an instance containing child nodes from a result builder, providing multiple intermediate keys at once in a "flattened" initializer format.
 
 	- Parameters:
-		- key: coding key used to index this node
-		- builder: closure representing the output of a result builder block containing this node's children
+		- key: root coding key used to index this node
+		- intermediateKeys: any intermediate keys that should also be added as recursive descendants to this node, before adding the children (can be empty)
+		- builder: closure representing the output of a result builder block containing child nodes
 	*/
-	init(_ key: String, @TreeBuilder _ builder: () -> [Self]) {
-		self.init(key, children: builder())
+	init(_ key: String, _ intermediateKeys: String..., @TreeBuilder builder: () -> [Self]) {
+		self.init(key: key, intermediateKeys: intermediateKeys, children: builder())
 	}
 
 	/**
-	Initialize an instance containing child nodes.
+	Initialize an instance containing child nodes, attaching the children at an arbitrarily deep level of intermediate nodes.
+
+	This initializer is exposed primarily to allow other libraries to be built on top of this one and provide child nodes directly - primary direct usage should be using other initializers with unlabeled parameters.
+
+	- Parameters:
+		- key: root coding key used to index this node
+		- intermediateKeys: any intermediate keys that should also be added as recursive descendants to this node, before adding the children (can be empty)
+		- children: array of direct child nodes
+	*/
+	init(key: String, intermediateKeys: [String], children: [Self]) {
+		guard !intermediateKeys.isEmpty else {
+			self.init(key: key, children: children)
+			return
+		}
+
+		// When no intermediate keys are provided, this simply falls back to adding the input children directly to this node.
+		// Note that the children need to be added to the furthest node down, so we reverse the ordering and build nested children from bottom up.
+		var children_current = children
+		for intermediateKey in intermediateKeys.reversed() {
+			children_current = [.init(key: intermediateKey, children: children_current)]
+		}
+
+		self.init(key: key, children: children_current)
+	}
+
+	/**
+	Initialize an instance containing child nodes directly, without any intermediate nodes.
+
+	This initializer is exposed primarily to allow other libraries to be built on top of this one and provide child nodes directly - primary direct usage should be using other initializers with unlabeled parameters.
 
 	- Parameters:
 		- key: coding key used to index this node
 		- children: array of direct child nodes
 	*/
-	init(_ key: String, children: [Self]) {
+	init(key: String, children: [Self]) {
 		// Nodes are considered optional if all of their children are also optional, or they directly decode an optional value.
 		let optionalToDecode = children.allSatisfy(\.optionalToDecode)
 
@@ -168,16 +198,45 @@ public extension DeepCodingNode where Root: DeepDecodable {
 		}
 	}
 
+
 	/**
-	Initialize an instance capturing a non-optional value to decode.
+	Initialize an instance capturing a non-optional value to decode, providing multiple intermediate keys at once in a "flattened" initializer format before the actual value.
 
 	This method type-erases the input key path's value type using a stored closure (which does not expose the value's type), so parents of this node can simply use arrays of this node without any other hassles from generics.
+
+	- Parameters:
+		- key: root coding key used to index this node
+		- intermediateKeys: any intermediate keys that should also be added as recursive descendants to this node, before adding the value-containing node (can be empty)
+		- targetPath: key path into the root type where the decoded value should be written
+	*/
+	init<Value: Decodable>(_ key: String, _ intermediateKeys: String..., containing targetPath: KeyPath<Root, DeepCodingValue<Value>>) {
+		/*
+		This implementation is simply copy-pasted in multiple places out of necessity.
+		If we try to abstract this out into a single place, we lose some generic type context and end up calling the wrong underlying initializer for the actual value type.
+		Luckily, this is a pretty small/simple implementation, so it's not too painful.
+		*/
+
+		guard let lastIntermediateKey = intermediateKeys.last else {
+			self.init(key: key, containing: targetPath)
+			return
+		}
+
+		let lastChild = Self(key: lastIntermediateKey, containing: targetPath)
+		self.init(key: key, intermediateKeys: intermediateKeys.dropLast(), children: [lastChild])
+	}
+
+	/**
+	Initialize an instance capturing a non-optional value to decode directly, without any intermediate keys.
+
+	This method type-erases the input key path's value type using a stored closure (which does not expose the value's type), so parents of this node can simply use arrays of this node without any other hassles from generics.
+
+	This initializer is exposed primarily to allow other libraries to be built on top of this one and create nodes directly - primary direct usage should be using other initializers with unlabeled parameters.
 
 	- Parameters:
 		- key: coding key used to index this node
 		- targetPath: key path into the root type where the decoded value should be written
 	*/
-	init<Value: Decodable>(_ key: String, containing targetPath: KeyPath<Root, DeepCodingValue<Value>>) {
+	init<Value: Decodable>(key: String, containing targetPath: KeyPath<Root, DeepCodingValue<Value>>) {
 		self.children = nil
 		// This node captures a non-optional value, cannot be optional to decode.
 		self.optionalToDecode = false
@@ -211,16 +270,45 @@ public extension DeepCodingNode where Root: DeepDecodable {
 		}
 	}
 
+
+	/**
+	Initialize an instance capturing an optional value to decode, providing multiple intermediate keys at once in a "flattened" initializer format before the actual value.
+
+	This method type-erases the input key path's value type using a stored closure (which does not expose the value's type), so parents of this node can simply use arrays of this node without any other hassles from generics.
+
+	- Parameters:
+		- key: root coding key used to index this node
+		- intermediateKeys: any intermediate keys that should also be added as recursive descendants to this node, before adding the value-containing node (can be empty)
+		- targetPath: key path into the root type where the decoded value should be written
+	*/
+	init<Value: Decodable>(_ key: String, _ intermediateKeys: String..., containing targetPath: KeyPath<Root, DeepCodingValue<Value?>>) {
+		/*
+		This implementation is simply copy-pasted in multiple places out of necessity.
+		If we try to abstract this out into a single place, we lose some generic type context and end up calling the wrong underlying initializer for the actual value type.
+		Luckily, this is a pretty small/simple implementation, so it's not too painful.
+		*/
+
+		guard let lastIntermediateKey = intermediateKeys.last else {
+			self.init(key: key, containing: targetPath)
+			return
+		}
+
+		let lastChild = Self(key: lastIntermediateKey, containing: targetPath)
+		self.init(key: key, intermediateKeys: intermediateKeys.dropLast(), children: [lastChild])
+	}
+
 	/**
 	Initialize an instance capturing an optional value to decode.
 
 	This method type-erases the input key path's value type using a stored closure (which does not expose the value's type), so parents of this node can simply use arrays of this node without any other hassles from generics.
 
+	This initializer is exposed primarily to allow other libraries to be built on top of this one and create nodes directly - primary direct usage should be using other initializers with unlabeled parameters.
+
 	- Parameters:
 		- key: coding key used to index this node
 		- targetPath: key path into the root type where the decoded value should be written
 	*/
-	init<Value: Decodable>(_ key: String, containing targetPath: KeyPath<Root, DeepCodingValue<Value?>>) {
+	init<Value: Decodable>(key: String, containing targetPath: KeyPath<Root, DeepCodingValue<Value?>>) {
 		self.children = nil
 		// This node captures an optional value and is always optional to decode.
 		self.optionalToDecode = true

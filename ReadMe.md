@@ -54,9 +54,13 @@ struct GithubGraphqlResponse: DeepDecodable {
 		static let codingTree = CodingTree {
 			Key("name", containing: \._name)
 
+			Key("field", "name", containing: \._fieldName)
+			/*
+			The above is a "flattened" shortcut for:
 			Key("field") {
 				Key("name", containing: \._fieldName)
 			}
+			*/
 		}
 
 
@@ -110,6 +114,12 @@ struct DeeplyNestedResponse: DeepDecodable {
 			}
 		}
 	}
+	/*
+	Also valid is the flattened form:
+	static let codingTree = CodingTree {
+		Key("topLevel", "secondLevel", "thirdLevel", containing: \._property)
+	}
+	*/
 
 	@Value var property: String
 }
@@ -157,6 +167,16 @@ struct DeeplyNestedRequest: DeepEncodable {
 			Key("otherSecondLevel", containing: \._wrappedProperty)
 		}
 	}
+	/*
+	Also valid is the flattened form:
+	static let codingTree = CodingTree {
+		Key("topLevel") {
+			Key("secondLevel", "thirdLevel", containing: \.bareProperty)
+
+			Key("otherSecondLevel", containing: \._wrappedProperty)
+		}
+	}
+	*/
 
 	let bareProperty: String
 	@Value var wrappedProperty: String
@@ -194,3 +214,6 @@ With encoding, you don't have to use the `@Value` wrappers, though you can if yo
 
 - Omission of the corresponding tree sections when all values at the leaves are `nil`
 	- This makes it so trying to encode an object with a `nil` value doesn't result in something like `{"top": {"second": {"third": null} } }`
+
+- Flattened shortcuts using variadic parameters for long paths with no branching:
+	- `Key("topLevel", "secondLevel", containing: \._property)` instead of `Key("topLevel") { Key("secondLevel", containing: \._property) }`

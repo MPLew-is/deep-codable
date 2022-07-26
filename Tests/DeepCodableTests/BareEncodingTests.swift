@@ -159,6 +159,46 @@ final class BareEncodingTests: XCTestCase {
 		XCTAssertEqual("tenthValue", dict["top"]?["second"]?["third"]?["fourth"]?["fifth"]?["sixth"]?["seventh"]?["eighth"]?["ninth"]?["tenth"])
 	}
 
+	/// Test that encoding a deep ten-level JSON body using a flattened coding tree encodes the correct value.
+	func testFlattenedExcessivelyDeepEncoding() throws {
+		struct FlattenedExcessivelyDeepEncoding: DeepEncodable {
+			static let codingTree = CodingTree {
+				Key("top", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", containing: \.key)
+			}
+
+			let key: String
+		}
+
+		let encoded = try encode(FlattenedExcessivelyDeepEncoding(key: "tenthValue"))
+
+		// We can't compare JSON strings here since key ordering is non-deterministic, so decode to a `Dictionary` instead.
+		let dict = try decode(
+			[
+				String: [
+					String: [
+						String: [
+							String: [
+								String: [
+									String: [
+										String: [
+											String: [
+												String: [
+													String: String
+												]
+											]
+										]
+									]
+								]
+							]
+						]
+					]
+				]
+			].self,
+			from: encoded
+		)
+		XCTAssertEqual("tenthValue", dict["top"]?["second"]?["third"]?["fourth"]?["fifth"]?["sixth"]?["seventh"]?["eighth"]?["ninth"]?["tenth"])
+	}
+
 	/// Test that encoding a deep ten-level JSON body with two keys in different branches encodes the correct values.
 	func testBranchedExcessivelyDeepEncoding() throws {
 		struct BranchedExcessivelyDeepEncoding: DeepEncodable {
@@ -229,6 +269,51 @@ final class BareEncodingTests: XCTestCase {
 		XCTAssertEqual("tenth2Value", dict["top"]?["second"]?["third"]?["fourth"]?["fifth"]?["sixth2"]?["seventh2"]?["eighth2"]?["ninth2"]?["tenth2"])
 	}
 
+	/// Test that encoding a deep ten-level JSON body with two keys in different branches using a flattened coding tree encodes the correct values.
+	func testFlattenedBranchedExcessivelyDeepEncoding() throws {
+		struct FlattenedBranchedExcessivelyDeepEncoding: DeepEncodable {
+			static let codingTree = CodingTree {
+				Key("top", "second", "third", "fourth", "fifth") {
+					Key("sixth1", "seventh1", "eighth1", "ninth1", "tenth1", containing: \.key1)
+					Key("sixth2", "seventh2", "eighth2", "ninth2", "tenth2", containing: \.key2)
+				}
+			}
+
+			let key1: String
+			let key2: String
+		}
+
+		let encoded = try encode(FlattenedBranchedExcessivelyDeepEncoding(key1: "tenth1Value", key2: "tenth2Value"))
+
+		// We can't compare JSON strings here since key ordering is non-deterministic, so decode to a `Dictionary` instead.
+		let dict = try decode(
+			[
+				String: [
+					String: [
+						String: [
+							String: [
+								String: [
+									String: [
+										String: [
+											String: [
+												String: [
+													String: String
+												]
+											]
+										]
+									]
+								]
+							]
+						]
+					]
+				]
+			].self,
+			from: encoded
+		)
+		XCTAssertEqual("tenth1Value", dict["top"]?["second"]?["third"]?["fourth"]?["fifth"]?["sixth1"]?["seventh1"]?["eighth1"]?["ninth1"]?["tenth1"])
+		XCTAssertEqual("tenth2Value", dict["top"]?["second"]?["third"]?["fourth"]?["fifth"]?["sixth2"]?["seventh2"]?["eighth2"]?["ninth2"]?["tenth2"])
+	}
+
 
 	/// Test that optionals encode correctly when provided an actual value.
 	func testOptionalEncodingToValue() throws {
@@ -265,6 +350,40 @@ final class BareEncodingTests: XCTestCase {
 		let actual = try encode(OptionalEncodingToNil(key: nil))
 		XCTAssertEqual(expected, actual)
 	}
+
+
+	/// Test that optionals encode correctly using a flattened coding tree when provided an actual value.
+	func testFlattenedOptionalEncodingToValue() throws {
+		struct FlattenedOptionalEncodingToValue: DeepEncodable {
+			static let codingTree = CodingTree {
+				Key("top", "second", containing: \.key)
+			}
+
+			let key: String?
+		}
+
+		let encoded = try encode(FlattenedOptionalEncodingToValue(key: "secondValue"))
+
+		// We can't compare JSON strings here since key ordering is non-deterministic, so decode to a `Dictionary` instead.
+		let dict = try decode([String: [String: String]].self, from: encoded)
+		XCTAssertEqual("secondValue", dict["top"]?["second"])
+	}
+
+	/// Test that optionals encode correctly using a flattened coding tree when not provided an actual value.
+	func testFlattenedOptionalEncodingToNil() throws {
+		struct FlattenedOptionalEncodingToNil: DeepEncodable {
+			static let codingTree = CodingTree {
+				Key("top", "second", containing: \.key)
+			}
+
+			let key: String?
+		}
+
+		let expected = "{}"
+		let actual = try encode(FlattenedOptionalEncodingToNil(key: nil))
+		XCTAssertEqual(expected, actual)
+	}
+
 
 	/// Test that integers encode correctly.
 	func testIntEncoding() throws {

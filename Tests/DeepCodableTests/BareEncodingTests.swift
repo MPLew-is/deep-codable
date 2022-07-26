@@ -230,19 +230,19 @@ final class BareEncodingTests: XCTestCase {
 	}
 
 
-	struct OptionalEncoding: DeepEncodable {
-		static let codingTree = CodingTree {
-			Key("top") {
-				Key("second", containing: \.key)
-			}
-		}
-
-		let key: String?
-	}
-
 	/// Test that optionals encode correctly when provided an actual value.
 	func testOptionalEncodingToValue() throws {
-		let encoded = try encode(OptionalEncoding(key: "secondValue"))
+		struct OptionalEncodingToValue: DeepEncodable {
+			static let codingTree = CodingTree {
+				Key("top") {
+					Key("second", containing: \.key)
+				}
+			}
+
+			let key: String?
+		}
+
+		let encoded = try encode(OptionalEncodingToValue(key: "secondValue"))
 
 		// We can't compare JSON strings here since key ordering is non-deterministic, so decode to a `Dictionary` instead.
 		let dict = try decode([String: [String: String]].self, from: encoded)
@@ -251,8 +251,18 @@ final class BareEncodingTests: XCTestCase {
 
 	/// Test that optionals encode correctly when not provided an actual value.
 	func testOptionalEncodingToNil() throws {
+		struct OptionalEncodingToNil: DeepEncodable {
+			static let codingTree = CodingTree {
+				Key("top") {
+					Key("second", containing: \.key)
+				}
+			}
+
+			let key: String?
+		}
+
 		let expected = "{}"
-		let actual = try encode(OptionalEncoding(key: nil))
+		let actual = try encode(OptionalEncodingToNil(key: nil))
 		XCTAssertEqual(expected, actual)
 	}
 

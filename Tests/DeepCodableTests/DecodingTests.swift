@@ -251,18 +251,18 @@ final class DecodingTests: XCTestCase {
 	}
 
 
-	struct OptionalDecoding: DeepDecodable {
-		static let codingTree = CodingTree {
-			Key("top") {
-				Key("second", containing: \._key)
-			}
-		}
-
-		@Value var key: String?
-	}
-
 	/// Test that optionals decode correctly when provided an actual value.
 	func testOptionalDecodingToValue() throws {
+		struct OptionalDecodingToValue: DeepDecodable {
+			static let codingTree = CodingTree {
+				Key("top") {
+					Key("second", containing: \._key)
+				}
+			}
+
+			@Value var key: String?
+		}
+
 		let json = """
 			{
 				"top": {
@@ -270,17 +270,27 @@ final class DecodingTests: XCTestCase {
 				}
 			}
 			"""
-		let decoded = try decode(OptionalDecoding.self, from: json)
+		let decoded = try decode(OptionalDecodingToValue.self, from: json)
 
 		XCTAssertEqual("secondValue", decoded.key)
 	}
 
 	/// Test that optionals decode correctly when not provided an actual value.
 	func testOptionalDecodingToNil() throws {
+		struct OptionalDecodingToNil: DeepDecodable {
+			static let codingTree = CodingTree {
+				Key("top") {
+					Key("second", containing: \._key)
+				}
+			}
+
+			@Value var key: String?
+		}
+
 		let json = """
 			{}
 			"""
-		let decoded = try decode(OptionalDecoding.self, from: json)
+		let decoded = try decode(OptionalDecodingToNil.self, from: json)
 
 		XCTAssertEqual(nil, decoded.key)
 	}
